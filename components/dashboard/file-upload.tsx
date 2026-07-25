@@ -3,43 +3,30 @@
 import { useCallback, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import { UploadCloud, FileSpreadsheet } from "lucide-react";
-import * as XLSX from "xlsx";
+import { parseExcel, type SheetData } from "@/lib/excel";
+import {
+  profileSheets,
+  type SheetProfile,
+} from "@/lib/data-profiler";
 
-type SheetData = {
-  sheetName: string;
-  rows: Record<string, unknown>[];
-};
 
 export function FileUpload() {
   const [fileName, setFileName] = useState("");
   const [sheets, setSheets] = useState<SheetData[]>([]);
+  const [profiles, setProfiles] = useState<SheetProfile[]>([]);
 
-  const onDrop = useCallback(async (acceptedFiles: File[]) => {
-    const file = acceptedFiles[0];
+const onDrop = useCallback(async (acceptedFiles: File[]) => {
+  const file = acceptedFiles[0];
 
-    if (!file) return;
+  if (!file) return;
 
-    setFileName(file.name);
+  setFileName(file.name);
 
-    const buffer = await file.arrayBuffer();
+  const parsedSheets = await parseExcel(file);
 
-    const workbook = XLSX.read(buffer, {
-      type: "array",
-    });
-
-    const parsedSheets = workbook.SheetNames.map((sheetName) => {
-      const worksheet = workbook.Sheets[sheetName];
-
-      const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(worksheet);
-
-      return {
-        sheetName,
-        rows,
-      };
-    });
-
-    setSheets(parsedSheets);
-  }, []);
+  setSheets(parsedSheets);
+  setProfiles(profileSheets(parsedSheets));
+}, []);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     accept: {
@@ -176,6 +163,70 @@ export function FileUpload() {
 })}
         </div>
       )}
+      {profiles.length > 0 && (
+  <div className="mt-10 space-y-6">
+    <h2 className="text-2xl font-bold">
+      Dataset Summary
+    </h2>
+
+    {profiles.map((sheet) => (
+      <div
+        key={sheet.sheetName}
+        className="rounded-2xl border border-zinc-200 p-6"
+      >
+        <h3 className="text-lg font-semibold">
+          {sheet.sheetName}
+        </h3>
+
+        <div className="mt-2 flex gap-6 text-sm text-zinc-500">
+          <span>{sheet.rows} rows</span>
+          <span>{sheet.columns} columns</span>
+        </div>
+
+        <div className="mt-6 overflow-hidden rounded-xl border">
+          <table className="w-full text-sm">
+            <thead className="bg-zinc-50">
+              <tr>
+                <th className="px-4 py-3 text-left">
+                  Column
+                </th>
+
+                <th className="px-4 py-3 text-left">
+                  Type
+                </th>
+
+                <th className="px-4 py-3 text-left">
+                  Missing
+                </th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {sheet.profiles.map((column) => (
+                <tr
+                  key={column.name}
+                  className="border-t"
+                >
+                  <td className="px-4 py-3">
+                    {column.name}
+                  </td>
+
+                  <td className="px-4 py-3 capitalize">
+                    {column.type}
+                  </td>
+
+                  <td className="px-4 py-3">
+                    {column.missing}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    ))}
+  </div>
+)}
     </div>
   );
 }
