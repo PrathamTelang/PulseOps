@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import {
   LayoutDashboard,
   Upload,
@@ -9,18 +11,22 @@ const items = [
   {
     icon: LayoutDashboard,
     label: "Dashboard",
+    href: "/dashboard",
   },
   {
     icon: Upload,
     label: "Uploads",
+    href: "/dashboard/uploads",
   },
   {
     icon: FileSpreadsheet,
     label: "Reports",
+    href: "/dashboard/reports",
   },
   {
     icon: Settings,
     label: "Settings",
+    href: "/dashboard/settings",
   },
 ];
 
@@ -35,14 +41,13 @@ export function Sidebar() {
 
       <nav className="flex-1 space-y-2 p-4">
         {items.map((item) => (
-          <button
-            key={item.label}
-            className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left transition hover:bg-zinc-100"
-          >
-            <item.icon size={18} />
-
-            {item.label}
-          </button>
+          <Link
+  href={item.href}
+  className="flex w-full items-center gap-3 rounded-xl px-4 py-3 transition hover:bg-zinc-100"
+>
+  <item.icon size={18} />
+  <span>{item.label}</span>
+</Link>
         ))}
       </nav>
     </aside>
